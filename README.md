@@ -22,3 +22,13 @@ Cloud Infrastructure:
 - Inside "bin" folder you'll find a relase-mode signed APK you can install and run normally in any Android device (compatible with Android KitKat and above).
 
 **Screenshots**
+
+iOS
+![alt text](https://raw.githubusercontent.com/glaydsoncosta/messageme-app/main/res/screens/screens-ios.png)
+
+Android
+![alt text](https://raw.githubusercontent.com/glaydsoncosta/messageme-app/main/res/screens/screens-android.png)
+
+
+**Demo Video**
+https://youtu.be/nG1mJU6NY5w
