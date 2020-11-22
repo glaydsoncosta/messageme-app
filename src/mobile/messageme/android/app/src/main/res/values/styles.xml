@@ -1,0 +1,35 @@
+<resources>
+    <!-- Base application theme. -->
+    <style name="AppTheme" parent="Theme.AppCompat.Light.NoActionBar">
+        <!--
+        <item name="android:windowFullscreen">false</item>
+        <item name="android:windowContentOverlay">@null</item>
+        <item name="android:fitsSystemWindows">false</item>
+        -->
+        <item name="android:windowDisablePreview">false</item>
+    </style>
+
+    <style name="SplashTheme" parent="Theme.ReactNative.AppCompat.Light.NoActionBar.FullScreen">
+        <item name="android:windowBackground">@drawable/android_splash_bg</item>
+        <item name="android:windowFullscreen">true</item>
+        <item name="android:windowContentOverlay">@null</item>
+        <item name="android:fitsSystemWindows">true</item>
+
+        <item name="android:windowDisablePreview">false</item>
+
+        <item name="windowActionBar">false</item>
+        <item name="windowNoTitle">true</item>
+    </style>
+
+    <style name="DefaultExplainingPermissionsTheme" parent="Theme.AppCompat.Light.Dialog.Alert">
+        <!-- Used for the buttons -->
+        <item name="colorAccent">@color/colorPrimary</item>
+
+        <!-- Used for the title and text -->
+        <item name="android:textColorPrimary">@color/colorPrimary</item>
+
+        <!-- Used for the background -->
+        <item name="android:background">@color/windowBackgroundColor</item>
+    </style>
+
+</resources>
