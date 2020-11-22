@@ -1,2 +1,10 @@
 /src/api/MessageMeAPI/.vs/MessageMeAPI/v16/.suo
 /src/api/MessageMeAPI/obj/Debug/netcoreapp3.1/MessageMeAPI.csprojAssemblyReference.cache
+*.pdb
+*.dll
+*.exe
+*.csproj.nuget.dgspec.json
+*.deps.json
+*.assets.json
+*.nuget.cache
+*.cache

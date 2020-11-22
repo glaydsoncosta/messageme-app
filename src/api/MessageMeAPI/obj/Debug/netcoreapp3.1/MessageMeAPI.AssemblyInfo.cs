@@ -13,11 +13,11 @@ using System.Reflection;
 
 [assembly: System.Reflection.AssemblyCompanyAttribute("MessageMeAPI")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
-[assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.6")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.6")]
+[assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.7")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.7")]
 [assembly: System.Reflection.AssemblyProductAttribute("MessageMeAPI")]
 [assembly: System.Reflection.AssemblyTitleAttribute("MessageMeAPI")]
-[assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.6")]
+[assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.7")]
 
 // Gerado pela classe WriteCodeFragment do MSBuild.
 
