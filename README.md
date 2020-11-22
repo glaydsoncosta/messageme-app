@@ -1,12 +1,12 @@
 # messageme-app
 React Native Demo App - Civi
 
-Development Stack:
+**Development Stack**
 - PostgresSQL (Database)
 - .NET Core + Dapper + NpgSQL (REST API)
 - React Native (Mobile)
 
-Cloud Infrastructure:
+**Cloud Infrastructure**
 - Heroku SaaS (Free/Hobby account)
 
 **React Native used components**
