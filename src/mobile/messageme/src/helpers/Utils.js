@@ -95,15 +95,15 @@ function httpRequestError(statusCode) {
 }
 
 function showError(errorMessage) {
-    showSimpleAlertDialog('Erro', errorMessage, () => {});
+    showSimpleAlertDialog('Error', errorMessage, () => {});
 }
 
 function showWarning(warningMessage) {
-    showSimpleAlertDialog('Aviso', warningMessage, () => {});
+    showSimpleAlertDialog('Warning', warningMessage, () => {});
 }
 
 function showInformation(infoMessage) {
-    showSimpleAlertDialog('Informação', infoMessage, () => {});
+    showSimpleAlertDialog('Information', infoMessage, () => {});
 }
 
 function showSimpleChoiceDialog(title, content, textCancel, textOK, actionCancel, actionOK) {
@@ -234,7 +234,7 @@ function heightPercentToDP(heightPercent, customHeight) {
     return PixelRatio.roundToNearestPixel(screenHeight * elemHeight / 100);
 }
 
-function unformatAPIDateTime(dateTime, includesTime, onlyTime) {
+function unformatAPIDateTime(dateTime, includesTime) {
     if (dateTime !== undefined) {
         var tmpDateTime = dateTime;
         //2020-06-17T22:06:12
@@ -251,7 +251,13 @@ function unformatAPIDateTime(dateTime, includesTime, onlyTime) {
             var minute = strTime.substr(3, 2);
             return hour + ':' + minute;
         } else {
-            return textNonth + ' ' + day;
+            if (includesTime) {
+                var hour = strTime.substr(0, 2);
+                var minute = strTime.substr(3, 2);                
+                return textNonth + ' ' + day + ' ' + hour + ':' + minute;
+            } else {
+                return textNonth + ' ' + day;
+            }
         }
     }
 }

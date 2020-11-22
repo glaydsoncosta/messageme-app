@@ -1,5 +1,5 @@
 import React, {Component} from 'react';
-import {  Platform, StyleSheet, Text, Image, View, NativeModules, ScrollView, RefreshControl, FlatList, Modal, StatusBar } from 'react-native';
+import {  Platform, StyleSheet, Text, Image, View, NativeModules, ScrollView, RefreshControl, FlatList, Modal, StatusBar, ActivityIndicator, BackHandler } from 'react-native';
 import { TouchableOpacity } from 'react-native-gesture-handler';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import * as Utils from '../helpers/Utils';
@@ -38,38 +38,63 @@ export default class App extends Component {
   }
 
   componentDidMount() {
-    this.fetchMessages();
+    //this.fetchMessages();
+    // Handling Android-only backpress (in this case we close application)
+    BackHandler.addEventListener('hardwareBackPress', this.handleBackButton);
+  }
+
+  handleBackButton = () => {
+    BackHandler.exitApp();
+  }
+
+  showDemoOnlyPurposeMessage = () => {
+    Utils.showInformation('Only for demonstrations purpose. Thank you!');
   }
 
   showMessagesList = () => {
-    if (this.state.messagesList.length <= 0) {
+    if (this.state.isLoadingMessages) {
+      return    <View>
+                  <View style={styles.emptyStateContainer}>
+                    <ActivityIndicator size='large' style={{color: Consts.colorPrimary, paddingBottom: 10}}/>
+                    <Text style={styles.emptyStateTitleText}>Loading messages, please wait...</Text>
+                  </View>
+                </View>;
+    } else if ( this.state.messagesList.length <= 0) {
       return  <ScrollView
                 showsVerticalScrollIndicator={false}
                 refreshControl={
                   <RefreshControl
-                    refreshing={this.state.isLoadingMessages}
+                    refreshing={false}
                     onRefresh={this.fetchMessages}/>}
                     contentContainerStyle={styles.scrollViewContentContainerStyle}>
                 <View style={styles.emptyStateContainer}>
                   <Image style={styles.emptyStateIcon} source={require('../media/img/email_empty_state.png')}/>
-                  <Text style={styles.emptyStateTitleText}>Oh no! you don't have new messages</Text>
-                  <Text style={styles.emptyStateDetailsText}>Pull down this icon to refresh</Text>
+                  <Text style={styles.emptyStateTitleText}>Your inbox looks like empty</Text>
+                  <Text style={styles.emptyStateDetailsText}>This empty state was created intentionally. Please, pull down to refresh</Text>
                 </View>
               </ScrollView>;
     } else {
-      return  <FlatList
-                  refreshControl={
-                      <RefreshControl 
-                        refreshing={this.state.isLoadingMessages}
-                        onRefresh={this.fetchMessages}/>}            
-                    keyboardShouldPersistTaps="always"
-                    data={this.state.messagesList}
-                    extraData={this.state}
-                    keyExtractor={(item, index) => index.toString()}
-                    initialScrollIndex={0}
-                    renderItem={({ item }) => (
-                      this.renderMessageItem(item)
-                    )}/>;
+      return  <View>
+                {Utils.renderIf(this.getUnreadMessagesCount() > 0,
+                  <View style={{paddingHorizontal: 10, paddingVertical: 10}}>
+                    <Text style={{fontSize: 15, fontWeight: '500', color: '#656464'}}>{this.getUnreadMessagesText()}</Text>
+                  </View>
+                )}
+                <FlatList
+                    refreshControl={
+                        <RefreshControl 
+                          refreshing={this.state.isLoadingMessages}
+                          onRefresh={this.fetchMessages}/>}            
+                      keyboardShouldPersistTaps="always"
+                      data={this.state.messagesList}
+                      extraData={this.state}
+                      keyExtractor={(item, index) => index.toString()}
+                      initialScrollIndex={0}
+                      renderItem={({ item }) => (
+                        this.renderMessageItem(item)
+                )}/>
+              </View>;
+
     }
   }
 
@@ -80,11 +105,11 @@ export default class App extends Component {
               </View>
               <View style={{width: '80%'}}>
                 <View style={{flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center'}}>
-                  <Text style={{ fontSize: 16, fontWeight: (message.read ? 'normal' : 'bold')}}>{message.subject}</Text>
-                  <Text style={{ fontSize: 14, fontWeight: message.read ? '500' : 'bold', color: message.read ? '#656464' : undefined}}>{Utils.unformatAPIDateTime(message.timestamp, true, false)}</Text>
+                  <Text style={{ fontSize: 16, fontWeight: (message.read ? 'normal' : 'bold')}}>{message.user.name}</Text>
+                  <Text style={{ fontSize: 14, fontWeight: message.read ? '500' : 'bold', color: message.read ? '#656464' : undefined}}>{Utils.unformatAPIDateTime(message.timestamp, false)}</Text>
                 </View>
                 <Text style={styles.userEmailText}>{message.user.email}</Text>
-                <Text style={[styles.messageDetails, { color: message.read ? '#656464' : undefined, fontWeight: !message.read ? 'bold' : 'normal' }]} numberOfLines={1} ellipsizeMode="tail">{message.detail}</Text>
+                <Text style={[styles.messageDetails, { color: message.read ? '#656464' : undefined, fontWeight: !message.read ? 'bold' : 'normal' }]} numberOfLines={1} ellipsizeMode="tail">{message.subject}</Text>
               </View>
             </TouchableOpacity>;
   }
@@ -118,27 +143,51 @@ export default class App extends Component {
             </View>;
   }
 
+  getUnreadMessagesCount = () => {
+    var arrMessages = this.state.messagesList;
+    var unreadMessagesCount = 0;
+    if (arrMessages !== undefined) {
+      arrMessages.forEach(element => {
+        if (!element.read) {
+          unreadMessagesCount++;
+        }
+      });
+    }
+    return unreadMessagesCount;
+  }
+
+  getUnreadMessagesText = () => {
+    var unreadMessagesCount = this.getUnreadMessagesCount();
+    if (unreadMessagesCount > 0) {
+      return 'You have ' + unreadMessagesCount.toString() + ' unread message(s)';
+    } else {
+      return 'Great, everything is clean overhere';
+    }
+  }  
+
   fetchMessages = () => {
     var requestHeaders = {};
     requestHeaders['Content-Type'] = 'application/json';
     var url = Consts.api.endpoint.messages.get.messages;
-    apiRequest({
-      url: url,
-      method: Consts.httpGet,
-      headers: requestHeaders
-    }).then((response) => {
-      if (response.success) {
-        this.setState({ isSendingData: false, messagesList: response.data, isLoadingMessages: false });
-      } else {
+    this.setState({ isLoadingMessages: true}, () => {
+      apiRequest({
+        url: url,
+        method: Consts.httpGet,
+        headers: requestHeaders
+      }).then((response) => {
+        if (response.success) {
+          this.setState({ isSendingData: false, messagesList: response.data, isLoadingMessages: false });
+        } else {
+          this.setState({ isSendingData: false, isLoadingMessages: false }, () => {
+            Utils.showError('Error while fetching your messages. Error: ' + response.error);
+          });
+        }
+      }).catch((error) => {
         this.setState({ isSendingData: false, isLoadingMessages: false }, () => {
-          Utils.showError('Error while fetching your messages. Error: ' + response.error);
-        });
-      }
-    }).catch((error) => {
-      this.setState({ isSendingData: false, isLoadingMessages: false }, () => {
-        Utils.showError('Error while fetching your messages. Error: ' + error);
-      });      
-    });  
+          Utils.showError('Error while fetching your messages. Error: ' + error);
+        });      
+      });
+    });
   }
 
   markMessageAsRead = (messageId) => {
@@ -174,7 +223,7 @@ export default class App extends Component {
           animationType='slide'
           onRequestClose={() => this.setState({ modalMessageDetailsVisible: false })}>
             <StatusBar barStyle="dark-content" translucent={true} backgroundColor="transparent" />
-            <SafeAreaView style={{flex: 1, paddingHorizontal: 20, paddingVertical: 10}}>
+            <SafeAreaView style={{flex: 1, paddingHorizontal: 15, paddingVertical: 10}}>
               {Utils.renderIf(Platform.OS === 'ios',
                 <View style={{paddingBottom: 10}}>
                   <TouchableOpacity onPress={ () => this.setState({ modalMessageDetailsVisible: false})}>
@@ -182,20 +231,21 @@ export default class App extends Component {
                   </TouchableOpacity>
                 </View>
               )}
-              <View style={styles.messageItem}>
+              <View style={styles.messageItemModal}>
                 <View style={styles.messageUserAvatar}>
                   {this.getSenderAvatar(this.state.selectedMessage.user.name, this.state.selectedMessage.user.avatar)}                
                 </View>
                 <View style={{width: '80%'}}>
                   <View style={{flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center'}}>
-                    <Text style={{ fontSize: 16, fontWeight: (this.state.selectedMessage.read ? 'normal' : 'bold')}}>{this.state.selectedMessage.subject}</Text>
-                    <Text style={{ fontSize: 14, fontWeight: this.state.selectedMessage.read ? '500' : 'bold', color: this.state.selectedMessage.read ? '#656464' : undefined}}>{Utils.unformatAPIDateTime(this.state.selectedMessage.timestamp, true, false)}</Text>
+                    <Text style={{ fontSize: 16, fontWeight: (this.state.selectedMessage.read ? 'normal' : 'bold')}}>{this.state.selectedMessage.user.name}</Text>
+                    <Text style={{ fontSize: 14, fontWeight: this.state.selectedMessage.read ? '500' : 'bold', color: this.state.selectedMessage.read ? '#656464' : undefined}}>{Utils.unformatAPIDateTime(this.state.selectedMessage.timestamp, true)}</Text>
                   </View>
                   <Text style={styles.userEmailText}>{this.state.selectedMessage.user.email}</Text>
                 </View>
               </View>
               <View style={{height: Utils.heightPercentToDP('80%'), alignSelf: 'stretch'}}>
                 <ScrollView>
+                  <Text style={styles.messageTitleModal}>{this.state.selectedMessage.subject}</Text>
                   <Text style={styles.messageDetailsModal}>{this.state.selectedMessage.detail}</Text>
                   <View style={{marginTop: 20}}>
                     <UIButton 
@@ -225,7 +275,7 @@ export default class App extends Component {
               <Text style={styles.welcomeMessageText}>Welcome back to your Inbox</Text>
             </View>
             <View style={styles.userSettingsSection}>
-              <TouchableOpacity>
+              <TouchableOpacity onPress={ () => this.showDemoOnlyPurposeMessage() }>
                 <Image style={styles.userSettingsStyle} source={require('../media/img/icons/settings.png')}/>
               </TouchableOpacity>
             </View>
@@ -235,17 +285,17 @@ export default class App extends Component {
               <Image style={styles.actionButton} source={require('../media/img/icons/email.png')}/>
               <Text style={styles.actionButtonEnabledText}>Messages</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={styles.actionButtonDisabled}>
+            <TouchableOpacity style={styles.actionButtonDisabled} onPress={ () => this.showDemoOnlyPurposeMessage() }>
               <Image style={styles.actionButton} source={require('../media/img/icons/calendar.png')}/>
               <Text style={styles.actionButtonDisabledText}>Calendar</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={styles.actionButtonDisabled}>
+            <TouchableOpacity style={styles.actionButtonDisabled} onPress={ () => this.showDemoOnlyPurposeMessage() } >
               <Image style={styles.actionButton} source={require('../media/img/icons/todo.png')}/>
               <Text style={styles.actionButtonDisabledText}>Todo</Text>  
             </TouchableOpacity>                        
           </View>
         </View>
-        <View style={styles.mainContent}>
+        <View style={[styles.mainContent, { height: this.getUnreadMessagesCount() > 0 ? Utils.heightPercentToDP('70%') : Utils.heightPercentToDP('73%') }]}>
           {this.showMessagesList()}
         </View>
       </View>
@@ -360,13 +410,16 @@ const styles = StyleSheet.create({
   emptyStateTitleText: {
     fontWeight: '700', 
     fontSize: 18,
-    color: '#B4B4B4'
+    color: '#B4B4B4',
+    textAlign: 'center'
   },
   emptyStateDetailsText: {
     fontWeight: '300',
     fontSize: 16,
     color: '#B4B4B4',
-    marginTop: 5    
+    marginTop: 5,
+    textAlign: 'center',
+    paddingHorizontal: 10
   },
   scrollViewContentContainerStyle: {
     flexGrow: 1
@@ -392,6 +445,13 @@ const styles = StyleSheet.create({
     paddingTop: 5,
     paddingHorizontal: 10
   },
+  messageItemModal: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingBottom: 15,
+    paddingTop: 5,
+    paddingHorizontal: 0
+  },  
   messageUserAvatar: {
     width: '20%'    
   },
@@ -405,10 +465,19 @@ const styles = StyleSheet.create({
     width: '98%',
     alignSelf: 'stretch'   
   },
+  messageTitleModal: {
+    marginTop: 5,
+    width: '98%',
+    alignSelf: 'stretch',
+    fontSize: 15,
+    fontWeight: 'bold',
+    paddingBottom: 10
+  },  
   messageDetailsModal: {
     marginTop: 5,
     width: '98%',
     alignSelf: 'stretch',
-    fontSize: 15   
+    fontSize: 15,
+    textAlign: 'justify'   
   }  
 });
